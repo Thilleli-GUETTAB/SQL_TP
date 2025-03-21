@@ -69,7 +69,7 @@ RETURN
         LEFT JOIN players_play pp ON p.id_player = pp.id_player
         LEFT JOIN turns t ON pp.id_turn = t.id_turn AND t.id_party = @partyid
         WHERE pip.id_party = @partyid
-          AND pip.is_alive = 'yes'
+          AND CAST(pip.is_alive AS VARCHAR(50)) = 'yes'
         GROUP BY p.pseudo, r.description_role, pt.title_party
     )
     SELECT TOP 1 *
