@@ -3,6 +3,7 @@
   <component name="SqlDialectMappings">
     <file url="file://$PROJECT_DIR$/wv_funcs.sql" dialect="TSQL" />
     <file url="file://$PROJECT_DIR$/wv_index.sql" dialect="TSQL" />
+    <file url="file://$PROJECT_DIR$/wv_procs.sql" dialect="TSQL" />
     <file url="file://$PROJECT_DIR$/wv_schema.sql" dialect="TSQL" />
     <file url="file://$PROJECT_DIR$/wv_triggers.sql" dialect="TSQL" />
     <file url="file://$PROJECT_DIR$/wv_views.sql" dialect="TSQL" />

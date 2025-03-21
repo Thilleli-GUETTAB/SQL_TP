@@ -1,4 +1,5 @@
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 -- wv_procs.sql
 -- Implémentation des procédures pour le jeu "Les Loups"
@@ -6,11 +7,17 @@
 -- 1. Procédure SEED_DATA
 -- Crée autant de tours de jeu que la partie peut en accepter
 >>>>>>> b925579fdb8adc5bccaca877b3da8821f3791e13
+=======
+-- Procédure SEED_DATA
+>>>>>>> eab7d2c841e8387861d4578f6faad93af09fdfaa
 CREATE PROCEDURE SEED_DATA
+(
     @NB_PLAYERS INT,
     @PARTY_ID INT
+)
 AS
 BEGIN
+<<<<<<< HEAD
 <<<<<<< HEAD
     SET NOCOUNT ON;
     DECLARE @i INT = 1;
@@ -29,18 +36,26 @@ GO
     DECLARE @i INT = 1;
     DECLARE @current_time DATETIME = GETDATE();
     DECLARE @tour_duration INT;
+=======
+    SET NOCOUNT ON;
+>>>>>>> eab7d2c841e8387861d4578f6faad93af09fdfaa
 
-    -- Récupère le nombre de tours configuré pour cette partie
-    SELECT @nb_tours = nb_turns, @tour_duration = max_wait_time
-    FROM party_settings
-    WHERE id_party = @PARTY_ID;
+    -- Créer autant de tours de jeu que la partie peut en accepter
+    DECLARE @TOTAL_TURNS INT = 10; -- Nombre de tours prédéfini, à ajuster si nécessaire
+    DECLARE @CURRENT_TURN INT = 1;
 
-    -- Crée les tours
-    WHILE @i <= @nb_tours
+    WHILE @CURRENT_TURN <= @TOTAL_TURNS
     BEGIN
-        INSERT INTO turns (id_party, start_time, end_time)
-        VALUES (@PARTY_ID, @current_time, DATEADD(SECOND, @tour_duration, @current_time));
+        -- Insérer un nouveau tour
+        INSERT INTO turns (id_turn, start_time, end_time)
+        VALUES
+        (
+            @CURRENT_TURN,
+            GETDATE(),
+            DATEADD(MINUTE, 5, GETDATE()) -- Fin du tour dans 5 minutes
+        );
 
+<<<<<<< HEAD
         -- Met à jour le temps pour le prochain tour
         SET @current_time = DATEADD(SECOND, @tour_duration, @current_time);
         SET @i = @i + 1;
@@ -130,76 +145,110 @@ GO
 
         -- 2. Insertion des nouvelles positions
         INSERT INTO board_state (id_party, id_turn, position_col, position_row, content_type, id_player)
+=======
+        -- Pour chaque joueur, insérer une action de déplacement
+        INSERT INTO players_play
+        (
+            id_player,
+            id_turn,
+            start_time,
+            end_time,
+            action,
+            origin_position_row,
+            origin_position_col,
+            target_position_row,
+            target_position_col
+        )
+>>>>>>> eab7d2c841e8387861d4578f6faad93af09fdfaa
         SELECT
-            @PARTY_ID,
-            @TOUR_ID,
-            pp.target_position_col,
-            pp.target_position_row,
-            CASE
-                WHEN r.description_role = 'loup' THEN 'loup'
-                ELSE 'villageois'
-            END,
-            pp.id_player
+            pip.id_player,
+            @CURRENT_TURN,
+            GETDATE(),
+            DATEADD(SECOND, 30, GETDATE()), -- Action dure 30 secondes
+            'move',
+            CAST('0' AS VARCHAR(50)), -- Position de départ
+            CAST('0' AS VARCHAR(50)),
+            CAST('1' AS VARCHAR(50)), -- Position cible
+            CAST('1' AS VARCHAR(50))
         FROM
-            players_play pp
-        JOIN
-            players_in_parties pip ON pp.id_player = pip.id_player AND pip.id_party = @PARTY_ID
-        JOIN
-            roles r ON pip.id_role = r.id_role
-        WHERE
-            pp.id_turn = @TOUR_ID
-            AND pp.action = 'move'
-            AND pp.target_position_col IS NOT NULL
-            AND pp.target_position_row IS NOT NULL
-            AND NOT EXISTS (
-                -- Vérifie si la destination n'est pas un obstacle
-                SELECT 1
-                FROM board_state
-                WHERE
-                    id_party = @PARTY_ID
-                    AND id_turn = @TOUR_ID
-                    AND position_col = pp.target_position_col
-                    AND position_row = pp.target_position_row
-                    AND content_type = 'obstacle'
-            );
+            players_in_parties pip;
 
-        -- 3. Traitement des éliminations (villageois sur la même case qu'un loup)
-        UPDATE pip
-        SET
-            pip.is_alive = 0 -- 0 = mort
+        SET @CURRENT_TURN = @CURRENT_TURN + 1;
+    END
+END
+GO
+
+-- Procédure COMPLETE_TOUR
+CREATE PROCEDURE COMPLETE_TOUR
+(
+    @TOUR_ID INT
+)
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    -- Résoudre les demandes de déplacement
+    -- Vérifier les conflits de position
+    WITH DeplacementsPossibles AS (
+        SELECT
+            id_player,
+            CAST(target_position_row AS VARCHAR(50)) AS target_position_row,
+            CAST(target_position_col AS VARCHAR(50)) AS target_position_col,
+            COUNT(*) OVER (PARTITION BY CAST(target_position_row AS VARCHAR(50)), CAST(target_position_col AS VARCHAR(50))) AS NombreJoueursPosition
         FROM
-            players_in_parties pip
-        JOIN
-            roles r ON pip.id_role = r.id_role
-        JOIN
-            board_state bs ON bs.id_player = pip.id_player
+            players_play
         WHERE
-            pip.id_party = @PARTY_ID
-            AND bs.id_turn = @TOUR_ID
-            AND bs.id_party = @PARTY_ID
-            AND r.description_role = 'villageois'
+            id_turn = @TOUR_ID
+    ),
+    JoueursEnElimination AS (
+        SELECT
+            dp.id_player
+        FROM
+            DeplacementsPossibles dp
+        WHERE
+            dp.NombreJoueursPosition > 1
             AND EXISTS (
-                -- Vérifie s'il y a un loup sur la même case
                 SELECT 1
-                FROM board_state bs2
-                JOIN players_in_parties pip2 ON bs2.id_player = pip2.id_player
-                JOIN roles r2 ON pip2.id_role = r2.id_role
+                FROM players_in_parties pip1
+                JOIN players_in_parties pip2 ON pip1.id_player != pip2.id_player
                 WHERE
-                    bs2.id_party = @PARTY_ID
-                    AND bs2.id_turn = @TOUR_ID
-                    AND bs2.position_col = bs.position_col
-                    AND bs2.position_row = bs.position_row
-                    AND r2.description_role = 'loup'
-            );
-    END;
-END;
+                    pip1.id_player = dp.id_player
+                    AND pip1.id_role != pip2.id_role
+            )
+    )
+    -- Mettre à jour le statut des joueurs éliminés
+    UPDATE pip
+    SET is_alive = 'dead'
+    FROM
+        players_in_parties pip
+    JOIN JoueursEnElimination je ON pip.id_player = je.id_player;
 
--- 3. Procédure USERNAME_TO_LOWER
--- Met les noms des joueurs en minuscule
+    -- Marquer le tour comme terminé
+    UPDATE turns
+    SET end_time = GETDATE()
+    WHERE
+        id_turn = @TOUR_ID;
+END
+GO
+
+-- Supprimer la procédure USERNAME_TO_LOWER si elle existe
+IF EXISTS (SELECT * FROM sys.objects WHERE type = 'P' AND name = 'USERNAME_TO_LOWER')
+    DROP PROCEDURE USERNAME_TO_LOWER;
+GO
+
+-- Procédure USERNAME_TO_LOWER
 CREATE PROCEDURE USERNAME_TO_LOWER
 AS
 BEGIN
+    SET NOCOUNT ON;
+
+    -- Convertir tous les pseudos en minuscules
     UPDATE players
     SET pseudo = LOWER(pseudo);
+<<<<<<< HEAD
 END;
 >>>>>>> b925579fdb8adc5bccaca877b3da8821f3791e13
+=======
+END
+GO
+>>>>>>> eab7d2c841e8387861d4578f6faad93af09fdfaa
