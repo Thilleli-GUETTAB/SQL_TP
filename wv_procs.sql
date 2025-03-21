@@ -1,5 +1,6 @@
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 -- wv_procs.sql
 -- Implémentation des procédures pour le jeu "Les Loups"
@@ -10,6 +11,8 @@
 =======
 -- Procédure SEED_DATA
 >>>>>>> eab7d2c841e8387861d4578f6faad93af09fdfaa
+=======
+>>>>>>> bf43fd0d893a19ee4a4c965328d1cf9ebb69e322
 CREATE PROCEDURE SEED_DATA
 (
     @NB_PLAYERS INT,
@@ -19,6 +22,9 @@ AS
 BEGIN
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> bf43fd0d893a19ee4a4c965328d1cf9ebb69e322
     SET NOCOUNT ON;
     DECLARE @i INT = 1;
     DECLARE @NB_TOURS INT = @NB_PLAYERS * 5; 
@@ -31,6 +37,7 @@ BEGIN
 END;
 GO
 
+<<<<<<< HEAD
 =======
     DECLARE @nb_tours INT;
     DECLARE @i INT = 1;
@@ -65,12 +72,13 @@ END;
 -- 2. Procédure COMPLETE_TOUR
 -- Applique toutes les demandes de déplacement
 >>>>>>> b925579fdb8adc5bccaca877b3da8821f3791e13
+=======
+>>>>>>> bf43fd0d893a19ee4a4c965328d1cf9ebb69e322
 CREATE PROCEDURE COMPLETE_TOUR
     @TOUR_ID INT,
     @PARTY_ID INT
 AS
 BEGIN
-<<<<<<< HEAD
     SET NOCOUNT ON;
     BEGIN TRY
         BEGIN TRANSACTION;
@@ -111,6 +119,7 @@ BEGIN
     SET pseudo = LOWER(pseudo);
 END;
 GO
+<<<<<<< HEAD
 =======
     DECLARE @turn_end_time DATETIME;
 
@@ -252,3 +261,5 @@ END;
 END
 GO
 >>>>>>> eab7d2c841e8387861d4578f6faad93af09fdfaa
+=======
+>>>>>>> bf43fd0d893a19ee4a4c965328d1cf9ebb69e322
