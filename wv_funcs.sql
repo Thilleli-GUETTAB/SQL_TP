@@ -1,9 +1,64 @@
+<<<<<<< HEAD
 -- wv_funcs.sql
 -- Implémentation des fonctions pour le jeu "Les Loups"
 
 -- 1. Fonction random_position()
 -- Renvoie un couple aléatoire qui n'a jamais été choisi pour une partie donnée
 CREATE FUNCTION random_position(@nb_rows INT, @nb_cols INT, @id_party INT)
+=======
+CREATE FUNCTION random_position(
+    @id_party INT
+    -- @nb_lignes INT,
+    -- @nb_colonnes INT,
+)
+RETURNS VARCHAR(50)
+AS
+BEGIN
+    DECLARE @row INT, @col INT, @position VARCHAR(50);
+    DECLARE @existe BIT = 1;
+    WHILE (@existe = 1)
+    BEGIN
+        SET @row = CAST((RAND(CHECKSUM(NEWID())) * @nb_lignes) + 1 AS INT);
+        SET @col = CAST((RAND(CHECKSUM(NEWID())) * @nb_colonnes) + 1 AS INT);
+        SET @position = CAST(@row AS VARCHAR(10)) + ',' + CAST(@col AS VARCHAR(10));
+        IF NOT EXISTS (
+            SELECT 1
+            FROM players_play pp
+            JOIN turns t ON pp.id_turn = t.id_turn
+            WHERE t.id_party = @id_party
+              AND pp.target_position_row = CAST(@row AS VARCHAR(10))
+              AND pp.target_position_col = CAST(@col AS VARCHAR(10))
+        )
+            SET @existe = 0;
+    END;
+    RETURN @position;
+END;
+GO
+
+CREATE FUNCTION random_role(
+    @id_party INT
+    -- @max_wolves INT
+)
+RETURNS VARCHAR(50)
+AS
+BEGIN
+    DECLARE @nb_wolves INT;
+    SELECT @nb_wolves = COUNT(*)
+    FROM players_in_parties
+    WHERE id_party = @id_party
+      AND id_role = (SELECT id_role FROM roles WHERE description_role = 'loup');
+    IF (@nb_wolves < @max_wolves)
+        RETURN (SELECT description_role FROM roles WHERE description_role = 'loup');
+    ELSE
+        RETURN (SELECT description_role FROM roles WHERE description_role = 'villageois');
+    RETURN '';
+END;
+GO
+
+CREATE FUNCTION get_the_winner(
+    @partyid INT
+)
+>>>>>>> 473b32d (Remove unused parameters from random_position and random_role functions in wv_funcs.sql)
 RETURNS TABLE
 AS
 RETURN
